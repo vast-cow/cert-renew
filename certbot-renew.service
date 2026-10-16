@@ -1,0 +1,32 @@
+[Unit]
+Description=Renew and deploy TLS certificates using Certbot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+
+EnvironmentFile=/etc/certbot-renewal/certbot.env
+
+DynamicUser=yes
+
+StateDirectory=certbot-renewal
+StateDirectoryMode=0700
+
+RuntimeDirectory=certbot-renewal
+RuntimeDirectoryMode=0755
+
+LogsDirectory=certbot-renewal
+LogsDirectoryMode=0700
+
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+# HTTP-01 challenge files must be readable by Nginx.
+UMask=0022
+
+ExecStartPre=+/usr/libexec/certbot-renewal/update-certbot.sh
+ExecStart=/usr/libexec/certbot-renewal/certbot-renew.sh
+ExecStartPost=+/usr/libexec/certbot-renewal/certbot-deploy.sh
