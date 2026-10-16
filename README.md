@@ -1,7 +1,5 @@
 # Certbot renewal
 
-Implements [the systemd/Certbot privilege separation article](https://github.com/vast-cow/en/blob/posts/posts/20260119-Automating%20TLS%20Certificate%20Renewal%20with%20systemd%20and%20%60certbot%60%20with%20Strong%20Privilege%20Separation.md).
-
 Certbot and UPnP run under systemd DynamicUser. Root updates the dedicated Python environment before renewal and deploys updated certificates to Nginx and StrongSwan afterward. The persistent timer runs twice daily with up to an hour of random delay.
 
 ## Setup
