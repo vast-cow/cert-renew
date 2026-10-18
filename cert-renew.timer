@@ -5,9 +5,8 @@ Description=Periodically renew TLS certificates using acme.sh
 Unit=cert-renew.service
 
 OnCalendar=*-*-* 00:00:00
-OnCalendar=*-*-* 12:00:00
 
-RandomizedDelaySec=1h
+RandomizedDelaySec=24h
 Persistent=true
 
 [Install]
