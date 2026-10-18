@@ -1,4 +1,4 @@
-# Certbot renewal
+# Cert Renew
 
 Certbot and UPnP run under systemd DynamicUser. The dynamic user creates and updates the dedicated Python environment in systemd's cache directory before renewal. Root deploys updated certificates to Nginx and StrongSwan afterward. The persistent timer runs twice daily with up to an hour of random delay.
 
@@ -23,15 +23,15 @@ server {
 Replace example.com with your domain. Keep redirects outside the challenge location. The runtime webroot follows the article's code; its prose contradicts this by suggesting private state storage, which Nginx cannot traverse. Do not enable TLS configuration referencing nonexistent certificates before first issuance.
 
 ```sh
-cp certbot.env.example certbot.env
-# Edit certbot.env for your domain, email and destination paths.
+cp cert.env.example cert.env
+# Edit cert.env for your domain, email and destination paths.
 sudo ./install.sh
-sudo systemctl start certbot-renew.service
-sudo journalctl -u certbot-renew.service -n 100 --no-pager
-systemctl list-timers certbot-renew.timer
+sudo systemctl start cert-renew.service
+sudo journalctl -u cert-renew.service -n 100 --no-pager
+systemctl list-timers cert-renew.timer
 ```
 
-The installer enables the timer immediately; a missed schedule can trigger a prompt run. Prepare networking and Nginx first. Existing installed configuration is preserved on reinstall. Edit `/etc/certbot-renewal/certbot.env` to change it. `DOMAINLIST` supports a single domain.
+The installer enables the timer immediately; a missed schedule can trigger a prompt run. Prepare networking and Nginx first. Existing installed configuration is preserved on reinstall. Edit `/etc/certbot-renewal/cert.env` to change it. `DOMAINLIST` supports a single domain.
 
 Configure Nginx TLS to use `/etc/nginx/pki/certs/fullchain.pem` and `/etc/nginx/pki/certs/privkey.pem`, and StrongSwan to use the deployed files under `/etc/ipsec.d`, adjusting for configured destination overrides. Scripts, configuration and deployment destinations must remain root-owned and unwritable by the renewal user.
 
@@ -40,8 +40,8 @@ Systemd manages the virtual environment at `$CACHE_DIRECTORY/venv` (`/var/cache/
 ## Validation and removal
 
 ```sh
-bash -n certbot-renew.sh certbot-deploy.sh update-certbot.sh install.sh uninstall.sh
-sudo systemd-analyze verify /etc/systemd/system/certbot-renew.service /etc/systemd/system/certbot-renew.timer
+bash -n cert-renew.sh cert-deploy.sh update-certbot.sh install.sh uninstall.sh
+sudo systemd-analyze verify /etc/systemd/system/cert-renew.service /etc/systemd/system/cert-renew.timer
 sudo ./uninstall.sh
 ```
 

@@ -6,7 +6,7 @@ After=network-online.target
 [Service]
 Type=oneshot
 
-EnvironmentFile=/etc/certbot-renewal/certbot.env
+EnvironmentFile=/etc/certbot-renewal/cert.env
 
 DynamicUser=yes
 
@@ -31,5 +31,5 @@ ProtectHome=yes
 UMask=0022
 
 ExecStartPre=/usr/libexec/certbot-renewal/update-certbot.sh
-ExecStart=/usr/libexec/certbot-renewal/certbot-renew.sh
-ExecStartPost=+/usr/libexec/certbot-renewal/certbot-deploy.sh
+ExecStart=/usr/libexec/certbot-renewal/cert-renew.sh
+ExecStartPost=+/usr/libexec/certbot-renewal/cert-deploy.sh
