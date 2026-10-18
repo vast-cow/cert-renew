@@ -13,6 +13,9 @@ DynamicUser=yes
 StateDirectory=certbot-renewal
 StateDirectoryMode=0700
 
+CacheDirectory=certbot-renewal
+CacheDirectoryMode=0700
+
 RuntimeDirectory=certbot-renewal
 RuntimeDirectoryMode=0755
 
@@ -27,6 +30,6 @@ ProtectHome=yes
 # HTTP-01 challenge files must be readable by Nginx.
 UMask=0022
 
-ExecStartPre=+/usr/libexec/certbot-renewal/update-certbot.sh
+ExecStartPre=/usr/libexec/certbot-renewal/update-certbot.sh
 ExecStart=/usr/libexec/certbot-renewal/certbot-renew.sh
 ExecStartPost=+/usr/libexec/certbot-renewal/certbot-deploy.sh

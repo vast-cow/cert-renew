@@ -7,6 +7,7 @@ if (( EUID == 0 )); then
 fi
 
 # Paths default to directories managed by systemd.
+CERTBOT_VENV="${CACHE_DIRECTORY:?CACHE_DIRECTORY is required}/venv"
 CONFIG_PATH="${CONFIG_PATH:-${STATE_DIRECTORY:?STATE_DIRECTORY is required}/config}"
 WORK_DIR="${WORK_DIR:-${RUNTIME_DIRECTORY:?RUNTIME_DIRECTORY is required}/work}"
 LOGS_DIR="${LOGS_DIR:-${LOGS_DIRECTORY:?LOGS_DIRECTORY is required}}"

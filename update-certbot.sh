@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-if (( EUID != 0 )); then
-    echo "[error] must run as root" >&2
+if (( EUID == 0 )); then
+    echo "[error] must run as non-root" >&2
     exit 1
 fi
 
-VENV="$CERTBOT_VENV"
+VENV="${CACHE_DIRECTORY:?CACHE_DIRECTORY is required}/venv"
 
 echo "[info] preparing Certbot virtual environment" >&2
 
 if [[ ! -x "$VENV/bin/python" ]]; then
     echo "[info] creating virtual environment" >&2
 
-    # The virtual environment must remain root-owned.
+    # systemd manages cache directory ownership for the dynamic user.
     umask 022
     python3 -m venv "$VENV"
 fi
