@@ -1,5 +1,5 @@
 [Unit]
-Description=Renew and deploy TLS certificates using Certbot
+Description=Renew and deploy TLS certificates using acme.sh
 Wants=network-online.target
 After=network-online.target
 
@@ -30,6 +30,6 @@ ProtectHome=yes
 # HTTP-01 challenge files must be readable by Nginx.
 UMask=0022
 
-ExecStartPre=/usr/libexec/certbot-renewal/update-certbot.sh
+ExecStartPre=/usr/libexec/certbot-renewal/update-acme.sh
 ExecStart=/usr/libexec/certbot-renewal/certbot-renew.sh
 ExecStartPost=+/usr/libexec/certbot-renewal/certbot-deploy.sh

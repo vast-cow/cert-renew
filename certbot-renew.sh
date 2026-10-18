@@ -7,15 +7,25 @@ if (( EUID == 0 )); then
 fi
 
 # Paths default to directories managed by systemd.
-CERTBOT_VENV="${CACHE_DIRECTORY:?CACHE_DIRECTORY is required}/venv"
-CONFIG_PATH="${CONFIG_PATH:-${STATE_DIRECTORY:?STATE_DIRECTORY is required}/config}"
-WORK_DIR="${WORK_DIR:-${RUNTIME_DIRECTORY:?RUNTIME_DIRECTORY is required}/work}"
+ACME_HOME="${CACHE_DIRECTORY:?CACHE_DIRECTORY is required}/acme.sh"
+CONFIG_PATH="${CONFIG_PATH:-${STATE_DIRECTORY:?STATE_DIRECTORY is required}/acme}"
 LOGS_DIR="${LOGS_DIR:-${LOGS_DIRECTORY:?LOGS_DIRECTORY is required}}"
 WEB_ROOT="${WEB_ROOT:-${RUNTIME_DIRECTORY:?RUNTIME_DIRECTORY is required}/webroot}"
 FLAGFILE="${RUNTIME_DIRECTORY:?RUNTIME_DIRECTORY is required}/renewed"
+PENDING="${STATE_DIRECTORY}/acme-deploy-pending"
+STAGING="${STATE_DIRECTORY}/acme-deploy"
+
+# Certbot certificate names are retained for configuration compatibility only.
+[[ "$DOMAINLIST" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || {
+    echo "[error] DOMAINLIST must contain one DNS name" >&2
+    exit 1
+}
+rm -f -- "$FLAGFILE"
+install -d -m 0700 "$CONFIG_PATH" "$STAGING" "$LOGS_DIR"
+common=(--home "$ACME_HOME" --config-home "$CONFIG_PATH"
+        --server letsencrypt --log "$LOGS_DIR/acme.sh.log")
 
 # Prepare writable runtime directories.
-install -d -m 0700 "$WORK_DIR"
 install -d -m 0755 "$WEB_ROOT"
 
 echo "[info] detecting local IP address" >&2
@@ -51,24 +61,29 @@ echo "[info] opening UPnP port" >&2
 mapping_attempted=1
 upnpc -a "$local_ip" 80 80 tcp 600
 
-echo "[info] running Certbot" >&2
+echo "[info] running acme.sh" >&2
 
-"$CERTBOT_VENV/bin/certbot" \
-    certonly \
-    --non-interactive \
-    --quiet \
-    --webroot \
-    -w "$WEB_ROOT" \
-    --cert-name "$CERT_NAME" \
-    --key-type rsa \
-    --rsa-key-size 4096 \
-    -d "$DOMAINLIST" \
-    --agree-tos \
-    --no-eff-email \
-    --email "$EMAIL" \
-    --deploy-hook "/usr/bin/touch $FLAGFILE" \
-    --config-dir "$CONFIG_PATH" \
-    --work-dir "$WORK_DIR" \
-    --logs-dir "$LOGS_DIR"
+status=0
+"$ACME_HOME/acme.sh" "${common[@]}" --issue \
+    --webroot "$WEB_ROOT" --domain "$DOMAINLIST" \
+    --keylength 4096 --accountemail "$EMAIL" || status=$?
+# acme.sh returns 2 when the certificate is not due for renewal.
+if (( status != 0 && status != 2 )); then
+    exit "$status"
+fi
 
-echo "[info] Certbot completed successfully" >&2
+# Mark pending before copying, so failed installation/deployment is retried.
+if (( status == 0 )); then
+    touch "$PENDING"
+fi
+if [[ -f "$PENDING" || ! -s "$STAGING/fullchain.pem" ]]; then
+    touch "$PENDING"
+    "$ACME_HOME/acme.sh" "${common[@]}" --install-cert \
+        --domain "$DOMAINLIST" \
+        --fullchain-file "$STAGING/fullchain.pem" \
+        --key-file "$STAGING/privkey.pem" \
+        --ca-file "$STAGING/chain.pem"
+    touch "$FLAGFILE"
+fi
+
+echo "[info] acme.sh completed successfully" >&2

@@ -6,7 +6,8 @@ if (( EUID != 0 )); then
     exit 1
 fi
 
-CONFIG_PATH="${CONFIG_PATH:-${STATE_DIRECTORY:?STATE_DIRECTORY is required}/config}"
+STAGING="${STATE_DIRECTORY:?STATE_DIRECTORY is required}/acme-deploy"
+PENDING="${STATE_DIRECTORY}/acme-deploy-pending"
 FLAGFILE="${RUNTIME_DIRECTORY:?RUNTIME_DIRECTORY is required}/renewed"
 
 if [[ ! -f "$FLAGFILE" ]]; then
@@ -16,19 +17,16 @@ fi
 
 echo "[info] deploying renewed certificates" >&2
 
-CERTPATH="$CONFIG_PATH/live/$CERT_NAME"
-
-CONFIG_REAL="$(realpath -e -- "$CONFIG_PATH")"
-ARCHIVE_PREFIX="$CONFIG_REAL/archive/$CERT_NAME/"
+STAGING_REAL="$(realpath -e -- "$STAGING")"
 
 check_cert_file() {
     local name="$1"
     local source
 
-    source="$(realpath -e -- "$CERTPATH/$name")" \
+    source="$(realpath -e -- "$STAGING/$name")" \
         || return 1
 
-    [[ "$source" == "$ARCHIVE_PREFIX"* ]] \
+    [[ "$source" == "$STAGING_REAL/$name" ]] \
         || return 1
 
     [[ -f "$source" && -s "$source" ]] \
@@ -83,3 +81,5 @@ echo "[info] restarting StrongSwan" >&2
 systemctl restart strongswan-starter
 
 echo "[info] certificate deployment completed" >&2
+
+rm -f -- "$PENDING"
